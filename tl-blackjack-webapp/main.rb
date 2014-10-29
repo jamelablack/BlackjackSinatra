@@ -33,9 +33,29 @@ helpers do #any methods defined within the helpers block are avaiable for both m
 	arr.select{|e| e == "A"}.count.times do
 			total -= 10 if total > 21	
 		end
-	total
+	total #calculate_total(session[:dealers_cards]) => 20
 	end
-	#calculate_total(session[:dealers_cards]) => 20
+	
+
+	def card_image(card) #['H', '4']
+		suit = case card[0]
+		when 'H' then'hearts'
+		when 'D' then 'diamonds'
+		when 'C' then 'clubs'
+		when 'S' then 'spades'
+	end
+
+		value = card[1]
+		if ['J', 'Q', 'K', 'A'].include?(value)
+			value = case card[1]
+				when 'J' then 'jack'
+				when 'Q' then 'queen'
+				when 'K' then 'king'
+				when 'A' then 'ace'
+			end
+		end
+		"<img src='/images/cards/#{suit}_#{value}.jpg' class='card_image'>"
+	end
 end
 
 before do #set of instance variable before each action
@@ -56,6 +76,10 @@ get '/new_player' do
 end
 
 post '/new_player' do 
+	if params[:player_name].empty?
+		@error = "Name is required."
+		halt erb(:new_player) #stop, don;t excute anything below this, render template instead.
+	end
 	session[:player_name] = params[:player_name]
 	redirect '/game'
 end
@@ -84,15 +108,19 @@ post '/game/player/hit' do
 	#instance variables are the best to use in this case to communicate to the layout template 
 	#because they go away as soon as another request comes in.
 	#@error is a perfect case for thiserb :game
-	if calculate_total(session[:player_cards]) > 21
-			@error = "Sorry, it looks like you busted."
+	player_total = calculate_total(session[:player_cards])
+		if player_total == 21
+			@success = "Congratulations! #{session[:player_name]} hit Blackjack!"
+			@show_hit_or_stay_buttons = false
+		elsif player_total > 21
+			@error = "Sorry, it looks like #{session[:player_name]} busted."
 			@show_hit_or_stay_buttons = false
 		end
 		erb :game
 	end
 
 post '/game/player/stay' do 
-	@success = "You have chosen to stay!"
+	@success = "#{session[:player_name]} has chosen to stay!"
 	@show_hit_or_stay_buttons = false
 	erb :game
 

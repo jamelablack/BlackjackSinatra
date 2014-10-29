@@ -6,42 +6,42 @@
 <div class="well">
 <h4>Dealer's cards:</h4>
 
-<ul>
+
 	<% session[:dealer_cards].each do |card| %>
-	<li><%= card.to_s %></li>
+	<%= card_image(card) %>
 	<% end %>
 
-</ul>
+
 </div>
 
 </br>
 
 <div class="well">
 <h4>Player's Cards:</h4>
-<ul>
+
 	<% session[:player_cards].each do |card| %>
-	<li><%= card.to_s %></li>
+	<%= card_image(card) %>
 	<% end %>
 
-</ul>
+
 </div>
 
 </br>
 
 
 <p>
-	What would you like to do?
+	What would <%= session[:player_name] %> like to do?
 </br>
-	<%= session[:player_name] %> has <%= calculate_total(session[:player_cards])%>.
+	<%= session[:player_name] %> has a total of <%= calculate_total(session[:player_cards])%>.
 <!-- You must set up a condition to remove the hit or stay buttons when the game is over -->
 <%if @show_hit_or_stay_buttons %>
-		<form action="/game/player/hit" method='post'>
-			<input type="submit" class="btn" value="Hit" />
+		<form id="hit_form" action="/game/player/hit" method='post'>
+			<input type="submit" class="btn btn-success" value="Hit" />
 		</form>
 
 
-		<form action="/game/player/stay" method='post'>
-			<input type="submit" class="btn" value="Stay" />
+		<form id="stay_form" action="/game/player/stay" method='post'>
+			<input type="submit" class="btn btn-warning" value="Stay" />
 		</form>
 	<% end %>
 
