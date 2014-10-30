@@ -3,6 +3,9 @@ require 'sinatra'
 
 set :sessions, true
 
+BLACKJACK_AMOUNT = 21
+
+DEALER_MIN_HIT = 17
 
 #pseudo code
 # get '/' do
@@ -31,7 +34,7 @@ helpers do #any methods defined within the helpers block are avaiable for both m
 	end
 	#correct for Aces
 	arr.select{|e| e == "A"}.count.times do
-			total -= 10 if total > 21	
+			total -= 10 if total > BLACKJACK_AMOUNT 	
 		end
 	total #calculate_total(session[:dealers_cards]) => 20
 	end
@@ -56,6 +59,25 @@ helpers do #any methods defined within the helpers block are avaiable for both m
 		end
 		"<img src='/images/cards/#{suit}_#{value}.jpg' class='card_image'>"
 	end
+	def winner!(msg)
+		@play_again = true	
+		@success = "<strong>#{session[:player_name]} wins!</strong/> #{msg}"
+		@show_hit_or_stay_buttons = false
+	end
+
+	def loser!(msg)
+		@play_again = true	
+		@error = "<strong>#{session[:player_name]} loses!</strong/> #{msg}"
+		@show_hit_or_stay_buttons = false	
+	end	
+
+	def tie!(msg)
+		@play_again = true	
+		@success = "<strong>It's a tie!</strong/> #{msg}"
+		@show_hit_or_stay_buttons = false
+	end
+
+
 end
 
 before do #set of instance variable before each action
@@ -85,6 +107,7 @@ post '/new_player' do
 end
 
 get '/game' do
+	session[:turn] = session[:player_name] #track who's turn it is
 	#set up initial game values
 		#deck -> create a deck and put it in session-> that will have a key value of deck
 		suits = ['H', 'D', 'C', 'S']
@@ -109,12 +132,14 @@ post '/game/player/hit' do
 	#because they go away as soon as another request comes in.
 	#@error is a perfect case for thiserb :game
 	player_total = calculate_total(session[:player_cards])
-		if player_total == 21
-			@success = "Congratulations! #{session[:player_name]} hit Blackjack!"
-			@show_hit_or_stay_buttons = false
-		elsif player_total > 21
-			@error = "Sorry, it looks like #{session[:player_name]} busted."
-			@show_hit_or_stay_buttons = false
+		if player_total == BLACKJACK_AMOUNT 
+			#@success = "Congratulations! #{session[:player_name]} hit Blackjack!"
+			winner!("#{session[:player_name]} hit Blackjack.")
+			#@show_hit_or_stay_buttons = false
+		elsif player_total > BLACKJACK_AMOUNT 
+			#@error = "Sorry, it looks like #{session[:player_name]} busted."
+			#@show_hit_or_stay_buttons = false
+			loser!("It looks like #{session[:player_name]} busted at #{player_total}. ")
 		end
 		erb :game
 	end
@@ -126,16 +151,19 @@ post '/game/player/stay' do
 end
 
 get '/game/dealer' do
+	session[:turn] = "dealer"
 	@show_hit_or_stay_buttons = false
 
 	#decision tree to calculate dealer total, bust, deal, or dealer won
 	dealer_total = calculate_total(session[:dealer_cards])
 
-	if dealer_total == 21
-		@error = "Sorry, dealer hit Blackjack."
-	elsif dealer_total > 21
-		@success = "Congratulations, dealer busted. You win!"
-	elsif dealer_total >= 17 #17,18,19,20
+	if dealer_total == BLACKJACK_AMOUNT 
+		#@error = "Sorry, dealer hit Blackjack."
+		loser!("Dealer hit Blackjack.")
+	elsif dealer_total > BLACKJACK_AMOUNT 
+		#@success = "Congratulations, dealer busted. You win!"
+		winner!("Congratulations! Dealer busted at #{dealer_total}")	
+	elsif dealer_total >= DEALER_MIN_HIT #17,18,19,20
 		#dealer stays
 		redirect '/game/compare'                                      
 	else 
@@ -159,13 +187,21 @@ get '/game/compare' do
 	dealer_total = calculate_total(session[:dealer_cards])
 
 	if player_total < dealer_total
-		@error = "Sorry, #{session[:player_name]} lost!"
+		#@error = "Sorry, #{session[:player_name]} lost!"
+		loser!("#{session[:player_name]} stayed at #{player_total} and the dealer stayed at #{dealer_total}.")
 	elsif player_total > dealer_total
-		@success= "Congratulations, #{session[:player_name]} won!"
+		#@success= "Congratulations, #{session[:player_name]} won!"
+		winner!("#{session[:player_name]} stayed at #{player_total} and the dealer stayed at #{dealer_total}.")
 	else
-		@success = "It's a tie!"
+		tie!("Both #{session[:player_name]} and the Dealer stayed at #{player_total}.")
+		#@success = "It's a tie!"
 	end
 
 	erb :game
 
+end
+
+
+get '/game_over' do
+	erb :game_over
 end
