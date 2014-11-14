@@ -1,13 +1,6 @@
 <h3>What's your name?</h3>
-
-
-<form action='/new_player' method="post">
-	<input type="text" name="player_name" />
-	<br/>
-	<input type="submit" class="btn btn-inverse" value="Let's Play!"/>
+<form action="/new_player" method="post">
+  <input type="text" name="player_name"/>
+  <br/>
+  <input type="submit" class="btn" name="submit1" value="Submit"/>
 </form>
-
-
-<!-- 1. You must designate method="post", the default is "get". 
-2. Must give the input "text" an arbitrary name, in this instance, we chose "player_name"
-3.  main.rb: under post, params is reset everytime you call it, so we must set the params[:player_name] = session[:player_name]-->
